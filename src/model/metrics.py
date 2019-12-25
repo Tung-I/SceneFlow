@@ -20,16 +20,14 @@ class EndPointError(nn.Module):
         """
         # Get the one-hot encoding of the prediction and the ground truth label.
 
-        error = np.sqrt(np.sum((output - target)**2, 2) + 1e-20)
-
-        gtflow_len = np.sqrt(np.sum(target*target, 2) + 1e-20) # B,N
-
+        error = torch.sqrt(torch.sum((output - target)**2, 1) + 1e-20)
+        gtflow_len = torch.sqrt(torch.sum(target*target, 2) + 1e-20) # B,N
         if mask is not None:
-            mask_sum = np.sum(mask, 1)
-            EPE = np.sum(error * mask, 1)[mask_sum > 0] / mask_sum[mask_sum > 0]
-            EPE = np.mean(EPE)
+            mask_sum = torch.sum(mask, 1)
+            EPE = torch.sum(error * mask, 1)[mask_sum > 0] / mask_sum[mask_sum > 0]
+            EPE = torch.mean(EPE)
         else:
-            EPE = np.mean(EPE)
+            EPE = torch.mean(error)
 
         return EPE
 
@@ -39,7 +37,7 @@ class Accuracy(nn.Module):
     """
     def __init__(self, threshold):
         super().__init__()
-        self.th = torch.tensor(threshold).cuda()
+        self.th = threshold
 
     def forward(self, output, target, mask=None):
         """
@@ -51,18 +49,29 @@ class Accuracy(nn.Module):
         """
         # Get the one-hot encoding of the prediction and the ground truth label.
 
-        error = np.sqrt(np.sum((output - target)**2, 2) + 1e-20)
+        error = torch.sqrt(torch.sum((output - target)**2, 1) + 1e-20)
 
-        gtflow_len = np.sqrt(np.sum(target*target, 2) + 1e-20) # B,N
+        gtflow_len = torch.sqrt(torch.sum(target*target, 1) + 1e-20) # B,N
+
+        # print(error.shape)
+        # print((error <= self.th).float().shape)
+        # print(mask.shape)
+        # print(((error/gtflow_len <= self.th)*mask))
 
         if mask is not None:
-            acc = np.sum(np.logical_or((error <= self.th)*mask, (error/gtflow_len <= self.th)*mask), axis=1)
-            mask_sum = np.sum(mask, 1)
+            op1 = ((error <= self.th).float()*mask).byte()
+            op2 = ((error/gtflow_len <= self.th).float()*mask).byte()
+            log = op1 | op2
+            acc = torch.sum(log.float(), 1)
+            mask_sum = torch.sum(mask, 1)
             acc = acc[mask_sum > 0] / mask_sum[mask_sum > 0]
-            acc = np.mean(acc)
+            acc = torch.mean(acc)
         else:
-            acc = np.sum(np.logical_or((error <= self.th), (error/gtflow_len <= self.th)), axis=1)
-            acc = np.mean(acc)
+            op1 = (error <= self.th).byte()
+            op2 = (error/gtflow_len <= self.th).byte()
+            log = op1 | op2
+            acc = torch.sum(log.float(), 1)
+            acc = torch.mean(acc)
 
         return acc
 

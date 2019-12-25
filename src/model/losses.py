@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 
-class L1Loss(nn.Module):
+class HuberLoss(nn.Module):
     """The L1 loss.
     """
     def __init__(self):

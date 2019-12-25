@@ -79,7 +79,7 @@ class FlyingThingsTrainer(BaseTrainer):
         """
         return batch['point1'], batch['point2'], batch['stereo1'], batch['stereo2'], batch['flow'], batch['mask']
 
-    def _compute_losses(self, output, target):
+    def _compute_losses(self, output, target, mask):
         """Compute the losses.
         Args:
             output (torch.Tensor): The model output.
@@ -87,10 +87,10 @@ class FlyingThingsTrainer(BaseTrainer):
         Returns:
             losses (list of torch.Tensor): The computed losses.
         """
-        losses = [loss(output, target) for loss in self.loss_fns]
+        losses = [loss(output, target, mask) for loss in self.loss_fns]
         return losses
 
-    def _compute_metrics(self, output, target):
+    def _compute_metrics(self, output, target, mask):
         """Compute the metrics.
         Args:
              output (torch.Tensor): The model output.
@@ -98,7 +98,7 @@ class FlyingThingsTrainer(BaseTrainer):
         Returns:
             metrics (list of torch.Tensor): The computed metrics.
         """
-        metrics = [metric(output, target) for metric in self.metric_fns]
+        metrics = [metric(output, target, mask) for metric in self.metric_fns]
         return metrics
 
     def _init_log(self):

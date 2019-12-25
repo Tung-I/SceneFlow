@@ -214,6 +214,7 @@ class PointNetSetAbstraction(nn.Module):
 
         # 选取邻域点
         if self.group_all == False:
+
             fps_idx = pointutils.furthest_point_sample(xyz_t, self.npoint)  # [B, N]
             new_xyz = pointutils.gather_operation(xyz, fps_idx)  # [B, C, N]
         else:
