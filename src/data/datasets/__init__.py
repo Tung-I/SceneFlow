@@ -1,1 +1,1 @@
-from .flythings_dataset_ import FlyingThingsDataset
+from .flyingthings_dataset import FlyingThingsDataset

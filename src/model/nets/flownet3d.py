@@ -8,7 +8,7 @@ from src.model.utils.flownet3d_module import PointNetSetAbstraction,PointNetFeat
 
 
 class FlowNet3D(BaseNet):
-    def __init__(self,args):
+    def __init__(self):
         super(FlowNet3D,self).__init__()
 
         self.sa1 = PointNetSetAbstraction(npoint=1024, radius=0.5, nsample=16, in_channel=3, mlp=[32,32,64], group_all=False)

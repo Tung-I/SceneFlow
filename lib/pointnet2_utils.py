@@ -23,6 +23,7 @@ class FurthestPointSampling(Function):
 
         B, N, _ = xyz.size()
         output = torch.cuda.IntTensor(B, npoint)
+        # output = torch.cuda.FloatTensor(B, npoint)
         temp = torch.cuda.FloatTensor(B, N).fill_(1e10)
 
         pointnet2.furthest_point_sampling_wrapper(B, N, npoint, xyz, temp, output)

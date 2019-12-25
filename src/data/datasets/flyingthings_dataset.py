@@ -50,8 +50,8 @@ class FlyingThingsDataset(BaseDataset):
         flow = file['flow']
         mask = file['valid_mask1']
 
-        point1, point2 = self.transforms(point1, point2, dtypes=[torch.float, torch.float])
-        stereo1, stereo2 = self.transforms(point1, point2, dtypes=[torch.float, torch.float])
-        flow, mask = self.transforms(flow, mask, dtypes=[torch.float, torch.float])
+        # point1, point2 = self.transforms(point1, point2, dtypes=[torch.float, torch.float])
+        # stereo1, stereo2 = self.transforms(point1, point2, dtypes=[torch.float, torch.float])
+        # flow, mask = self.transforms(flow, mask, dtypes=[torch.float, torch.float])
 
         return {"point1": point1, "point2": point2, "stereo1": stereo1, "stereo2": stereo2, "flow": flow, "mask": mask}

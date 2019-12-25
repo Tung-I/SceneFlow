@@ -1,3 +1,8 @@
+import torch
+import random
+import numpy as np
+import logging
+from tqdm import tqdm
 from src.runner.trainers.base_trainer import BaseTrainer
 
 
@@ -37,6 +42,7 @@ class FlyingThingsTrainer(BaseTrainer):
             st1 = st1.transpose(2,1).contiguous()
             st2 = st2.transpose(2,1).contiguous()
             flow = flow.transpose(2,1).contiguous()
+            mask = mask.float()
 
             if mode == 'training':
                 outputs = self.net(pc1, pc2, st1, st2)
@@ -71,7 +77,7 @@ class FlyingThingsTrainer(BaseTrainer):
             input (torch.Tensor): The data input.
             target (torch.LongTensor): The data target.
         """
-        return batch['image'], batch['label']
+        return batch['point1'], batch['point2'], batch['stereo1'], batch['stereo2'], batch['flow'], batch['mask']
 
     def _compute_losses(self, output, target):
         """Compute the losses.

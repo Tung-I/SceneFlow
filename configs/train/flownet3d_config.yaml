@@ -11,8 +11,8 @@ dataset:
         valid_preprocessings:
         augments:
         transforms:
-            - name: 'ToTensor'
-            
+            # - name: 'ToTensor'
+
 dataloader:
     name: 'Dataloader'
     kwargs:
