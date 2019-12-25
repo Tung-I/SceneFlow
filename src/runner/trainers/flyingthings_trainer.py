@@ -1,15 +1,67 @@
-import torch
-import torch.nn as nn
-from tqdm import tqdm
-
 from src.runner.trainers.base_trainer import BaseTrainer
 
 
-class VIPCUPSegTrainer(BaseTrainer):
+class FlyingThingsTrainer(BaseTrainer):
     """The KiTS trainer for segmentation task.
     """
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+    def _run_epoch(self, mode):
+        """Run an epoch for training.
+        Args:
+            mode (str): The mode of running an epoch ('training' or 'validation').
+
+        Returns:
+            log (dict): The log information.
+            batch (dict or sequence): The last batch of the data.
+            outputs (torch.Tensor or sequence of torch.Tensor): The corresponding model outputs.
+        """
+        if mode == 'training':
+            self.net.train()
+        else:
+            self.net.eval()
+        dataloader = self.train_dataloader if mode == 'training' else self.valid_dataloader
+        trange = tqdm(dataloader,
+                      total=len(dataloader),
+                      desc=mode)
+
+        log = self._init_log()
+        count = 0
+        for batch in trange:
+            batch = self._allocate_data(batch)
+            pc1, pc2, st1, st2, flow, mask = self._get_inputs_targets(batch)
+
+            pc1 = pc1.transpose(2,1).contiguous()
+            pc2 = pc2.transpose(2,1).contiguous()
+            st1 = st1.transpose(2,1).contiguous()
+            st2 = st2.transpose(2,1).contiguous()
+            flow = flow.transpose(2,1).contiguous()
+
+            if mode == 'training':
+                outputs = self.net(pc1, pc2, st1, st2)
+
+                losses = self._compute_losses(outputs, flow, mask)
+
+                loss = (torch.stack(losses) * self.loss_weights).sum()
+                self.optimizer.zero_grad()
+                loss.backward()
+                self.optimizer.step()
+            else:
+                with torch.no_grad():
+                    outputs = self.net(pc1, pc2, st1, st2)
+                    losses = self._compute_losses(outputs, flow, mask)
+                    loss = (torch.stack(losses) * self.loss_weights).sum()
+            metrics =  self._compute_metrics(outputs, flow, mask)
+
+            batch_size = self.train_dataloader.batch_size if mode == 'training' else self.valid_dataloader.batch_size
+            self._update_log(log, batch_size, loss, losses, metrics)
+            count += batch_size
+            trange.set_postfix(**dict((key, f'{value / count: .3f}') for key, value in log.items()))
+
+        for key in log:
+            log[key] /= count
+        return log, batch, outputs
 
     def _get_inputs_targets(self, batch):
         """Specify the data input and target.

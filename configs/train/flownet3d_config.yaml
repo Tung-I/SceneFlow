@@ -1,0 +1,61 @@
+main:
+    random_seed: 'nips2020'
+    saved_dir: '/home/tony/SceneFlow/models/flyingthings/flownet3d/train'
+
+dataset:
+    name: 'FlyingThingsDataset'
+    kwargs:
+        data_dir: '/home/tony/datasets/flyingthings3D_35_20k_2k_8192'
+        data_split_csv: '/home/tony/SceneFlow/data_split.csv'
+        train_preprocessings:
+        valid_preprocessings:
+        augments:
+        transforms:
+            - name: 'ToTensor'
+            
+dataloader:
+    name: 'Dataloader'
+    kwargs:
+        train_batch_size: 8
+        valid_batch_size: 1
+        shuffle: true
+        num_workers: 4
+
+net:
+    name: 'FlowNet3D'
+
+losses:
+    - name: 'L1Loss'
+      weight: 1.0
+
+metrics:
+    - name: 'EndPointError'
+    - name: 'Accuracy'
+      kwargs:
+        threshold: 0.1
+
+optimizer:
+    name: 'Adam'
+    kwargs:
+        lr: 0.001
+        weight_decay: 0
+        amsgrad: false
+
+logger:
+    name: 'FlyingThingsLogger'
+    kwargs:
+        dummy_input: [16, 1, 128, 128]
+
+monitor:
+    name: 'Monitor'
+    kwargs:
+        mode: 'min'
+        target: 'Loss'
+        saved_freq: 50
+        early_stop: 0
+
+trainer:
+    name: 'FlyingThingsTrainer'
+    kwargs:
+        device: 'cuda:0'
+        num_epochs: 400
