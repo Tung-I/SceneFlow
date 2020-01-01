@@ -23,7 +23,7 @@ class KitsSegPredictor(object):
         saved_dir (str): The directory to save the predicted videos, images and metrics (default: None).
         exported (bool): Whether to export the predicted video, images and metrics (default: False).
     """
-    def __init__(self, data_dir, data_split_csv, preprocessings, transforms, sample_size, shift,
+    def __init__(self, data_dir, data_split_csv,
                  device, net, metric_fns, saved_dir=None, exported=None):
         self.data_dir = data_dir
         self.data_split_csv = data_split_csv

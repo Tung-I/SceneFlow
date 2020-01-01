@@ -4,6 +4,31 @@ import numpy as np
 from skimage.morphology import label
 
 
+
+class EPE(nn.Module):
+    """The End Point Error.
+    """
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, output, target, mask=None):
+        """
+        Args:
+            output (torch.Tensor) (N, C, *): The model output.
+            target (torch.LongTensor) (N, 1, *): The data target.
+        Returns:
+            metric (torch.Tensor) (C): The dice scores for each class.
+        """
+        # Get the one-hot encoding of the prediction and the ground truth label.
+
+        maxi = torch.max(target)
+        mini = torch.min(target)
+        output = (output - mini) / (maxi - mini)
+        target = (target - mini) / (maxi - mini)
+        epe = torch.norm(output-target, p=2, dim=1).mean()
+
+        return epe
+
 class EndPointError(nn.Module):
     """The End Point Error.
     """
@@ -24,12 +49,13 @@ class EndPointError(nn.Module):
         gtflow_len = torch.sqrt(torch.sum(target*target, 2) + 1e-20) # B,N
         if mask is not None:
             mask_sum = torch.sum(mask, 1)
-            EPE = torch.sum(error * mask, 1)[mask_sum > 0] / mask_sum[mask_sum > 0]
+            EPE = torch.sum(error * mask, 1)[mask_sum > 0] / (mask_sum[mask_sum > 0] + 1e-20)
             EPE = torch.mean(EPE)
         else:
             EPE = torch.mean(error)
 
         return EPE
+
 
 
 class Accuracy(nn.Module):
@@ -64,7 +90,7 @@ class Accuracy(nn.Module):
             log = op1 | op2
             acc = torch.sum(log.float(), 1)
             mask_sum = torch.sum(mask, 1)
-            acc = acc[mask_sum > 0] / mask_sum[mask_sum > 0]
+            acc = acc[mask_sum > 0] / (mask_sum[mask_sum > 0] + 1e-20)
             acc = torch.mean(acc)
         else:
             op1 = (error <= self.th).byte()

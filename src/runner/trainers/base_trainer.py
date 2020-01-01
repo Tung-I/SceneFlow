@@ -136,7 +136,7 @@ class BaseTrainer:
         """
         raise NotImplementedError
 
-    def _compute_losses(self, outputs, targets, mask):
+    def _compute_losses(self, outputs, targets, mask=None):
         """Compute the losses.
         Args:
             outputs (torch.Tensor or sequence of torch.Tensor): The model outputs.
@@ -147,7 +147,7 @@ class BaseTrainer:
         """
         raise NotImplementedError
 
-    def _compute_metrics(self, outputs, targets, mask):
+    def _compute_metrics(self, outputs, targets, mask=None):
         """Compute the metrics.
         Args:
             outputs (torch.Tensor or sequence of torch.Tensor): The model outputs.

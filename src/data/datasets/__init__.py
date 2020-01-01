@@ -1,1 +1,3 @@
-from .flyingthings_dataset import FlyingThingsDataset
+from .flyingthings3d_dataset import FlyingThings3DDataset
+from .pwc_optical_dataset import PWCOpticalDataset
+from .pwc_disparity_dataset import PWCDisparityDataset

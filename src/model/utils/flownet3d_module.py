@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from time import time
 import numpy as np
-from lib import pointnet2_utils as pointutils
+from lib.pointnet_package import pointnet2_utils as pointutils
 # import lib.pointnet2_utils as pointutils
 
 
