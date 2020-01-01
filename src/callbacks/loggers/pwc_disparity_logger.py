@@ -28,8 +28,11 @@ class PWCDisparityLogger(BaseLogger):
         pred_train = train_output
         image_valid = valid_batch['rgb_l']
         label_valid = valid_batch['disparity']
-        pred_train = valid_output
+        pred_valid = valid_output
 
+        # print(image_train.size())
+        # print(label_train.size())
+        # print(pred_train.size())
 
 
         train_img = make_grid(image_train, nrow=1, normalize=True, scale_each=True, pad_value=1)

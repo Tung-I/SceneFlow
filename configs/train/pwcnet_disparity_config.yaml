@@ -22,7 +22,7 @@ dataloader:
         num_workers: 4
 
 net:
-    name: 'PWCNet'
+    name: 'PWCDNet'
     kwargs:
         device: 'cuda:0'
         lv_chs: [3, 16, 32, 64, 96, 128, 192]
@@ -30,7 +30,7 @@ net:
         batch_norm: True
         corr_activation: True
         residual: True
-        output_level: 6
+        output_level: 4
 
 losses:
     - name: 'MyL2Loss'

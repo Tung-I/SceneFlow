@@ -61,11 +61,10 @@ class PWCDisparityDataset(BaseDataset):
         rgb_l, rgb_r = self.transforms(rgb_l, rgb_r, dtypes=[torch.float, torch.float])
         disparity = self.transforms(disparity, dtypes=[torch.float])
 
-        reb_l = rgb_l.permute(2, 0, 1).contiguous()
-        reb_r = rgb_r.permute(2, 0, 1).contiguous()
+        rgb_l = rgb_l.permute(2, 0, 1).contiguous()
+        rgb_r = rgb_r.permute(2, 0, 1).contiguous()
         disparity = disparity.permute(2, 0, 1).contiguous()
 
-        print(disparity.size())
 
         # return {"rgb_l": rgb_l, "rgb_r": rgb_r, "rgb_next_l": rgb_next_l, "rgb_next_r": rgb_next_r, "disparity": disparity, "disparity_next": disparity_next, "flow": flow}
         return {"rgb_l": rgb_l, "rgb_r": rgb_r, "disparity": disparity}

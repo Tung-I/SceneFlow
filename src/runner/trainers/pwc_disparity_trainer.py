@@ -38,6 +38,9 @@ class PWCDisparityTrainer(BaseTrainer):
             batch = self._allocate_data(batch)
             rgb_l, rgb_r, target = self._get_inputs_targets(batch)
 
+            # print(rgb_l.size())
+            # print(target.size())
+
             # rgb_l = rgb_l.permute(0, 3, 1, 2).contiguous()
             # rgb_r = rgb_r.permute(0, 3, 1, 2).contiguous()
             # rgb_next_l = rgb_next_l.permute(0, 3, 1, 2).contiguous()
@@ -49,6 +52,7 @@ class PWCDisparityTrainer(BaseTrainer):
 
             if mode == 'training':
                 outputs = self.net(rgb_l, rgb_r)
+                # print(outputs.size())
 
                 losses = self._compute_losses(outputs, target)
 
