@@ -194,3 +194,40 @@ class DisparityContextNetwork(nn.Module):
     
     def forward(self, x):
         return self.convs(x)
+
+
+class SceneEstimator(nn.Module):
+
+    def __init__(self, ch_in, batch_norm):
+        super(SceneEstimator, self).__init__()
+
+        self.convs = nn.Sequential(
+            conv(batch_norm, ch_in, 128),
+            conv(batch_norm, 128, 128),
+            conv(batch_norm, 128, 96),
+            conv(batch_norm, 96, 64),
+            conv(batch_norm, 64, 32),
+            nn.Conv2d(in_channels = 32, out_channels = 3, kernel_size = 3, stride = 1, padding = 1, dilation = 1, groups = 1, bias = True)
+        )
+
+    def forward(self, x):
+        return self.convs(x)
+
+
+class SceneContextNetwork(nn.Module):
+
+    def __init__(self, ch_in, batch_norm):
+        super(SceneContextNetwork, self).__init__()
+
+        self.convs = nn.Sequential(
+            conv(batch_norm, ch_in, 128, 3, 1, 1),
+            conv(batch_norm, 128, 128, 3, 1, 2),
+            conv(batch_norm, 128, 128, 3, 1, 4),
+            conv(batch_norm, 128, 96, 3, 1, 8),
+            conv(batch_norm, 96, 64, 3, 1, 16),
+            conv(batch_norm, 64, 32, 3, 1, 1),
+            conv(batch_norm, 32, 3, 3, 1, 1)
+        )
+    
+    def forward(self, x):
+        return self.convs(x)
