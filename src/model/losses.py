@@ -23,9 +23,9 @@ class MyL2Loss(nn.Module):
         super().__init__()
 
     def forward(self, output, target, mask=None):
-        # minimum = torch.min(target)
-        # maximum = torch.max(target)
-        # output = (output - minimum) / (maximum - minimum)
-        # target = (target - minimum) / (maximum - minimum)
+        minimum = torch.min(target)
+        maximum = torch.max(target)
+        output = (output - minimum) / (maximum - minimum)
+        target = (target - minimum) / (maximum - minimum)
         loss = torch.norm(output - target, p=2, dim=1).mean()
         return loss
