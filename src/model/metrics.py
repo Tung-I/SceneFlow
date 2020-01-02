@@ -21,10 +21,10 @@ class EPE(nn.Module):
         """
         # Get the one-hot encoding of the prediction and the ground truth label.
 
-        maxi = torch.max(target)
-        mini = torch.min(target)
-        output = (output - mini) / (maxi - mini)
-        target = (target - mini) / (maxi - mini)
+        # maxi = torch.max(target)
+        # mini = torch.min(target)
+        # output = (output - mini) / (maxi - mini)
+        # target = (target - mini) / (maxi - mini)
         epe = torch.norm(output-target, p=2, dim=1).mean()
 
         return epe
