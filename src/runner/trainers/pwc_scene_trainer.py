@@ -6,7 +6,7 @@ from tqdm import tqdm
 from src.runner.trainers.base_trainer import BaseTrainer
 
 
-class PWCDispchangeTrainer(BaseTrainer):
+class PWCSceneTrainer(BaseTrainer):
     """The KiTS trainer for segmentation task.
     """
     def __init__(self, **kwargs):

@@ -7,7 +7,7 @@ from .base_logger import BaseLogger
 from lib.visualize import flow_visualize_2d
 
 
-class PWCDisparityLogger(BaseLogger):
+class PWCSceneLogger(BaseLogger):
     """The KiTS logger for the segmentation task.
     """
     def __init__(self, **kwargs):
