@@ -1,2 +1,9 @@
-models/*
-configs/*
+__pycache__/
+
+*.so
+
+.ipynb_checkpoints
+
+models/
+configs/train/example_config.yaml
+configs/test/example_config.yaml
