@@ -8,6 +8,9 @@ dataset:
         data_dir: '/home/tony/datasets/flyingthings3d_preprocessed'
         data_split_csv: '/home/tony/SceneFlow/flyingthings3d_split.csv'
         train_preprocessings:
+            - name: 'RandomCrop'
+              kwargs:
+                  size: [512, 512]
         valid_preprocessings:
         augments:
         transforms:
