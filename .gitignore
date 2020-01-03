@@ -5,5 +5,8 @@ __pycache__/
 .ipynb_checkpoints
 
 models/
+configs/
 configs/train/example_config.yaml
 configs/test/example_config.yaml
+
+flyingthings3d_split.csv
