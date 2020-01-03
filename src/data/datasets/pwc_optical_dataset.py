@@ -53,8 +53,7 @@ class PWCOpticalDataset(BaseDataset):
         flow = flow[:, :, :2]
 
         if self.type == 'train':
-            rgb_l, rgb_next_l = self.train_preprocessings(rgb_l, rgb_next_l)
-            flow = self.train_preprocessings(flow)
+            rgb_l, rgb_next_l, flow = self.train_preprocessings(rgb_l, rgb_next_l, flow)
 
         # rgb_l, rgb_r = self.transforms(rgb_l, rgb_r, dtypes=[torch.float, torch.float])
         # rgb_next_l, rgb_next_r = self.transforms(rgb_next_l, rgb_next_r, dtypes=[torch.float, torch.float])

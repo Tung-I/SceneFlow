@@ -60,8 +60,7 @@ class PWCDisparityDataset(BaseDataset):
         # disparity, disparity_next = self.transforms(disparity, disparity_next, dtypes=[torch.float, torch.float])
 
         if self.type == 'train':
-            rgb_l, rgb_r = self.train_preprocessings(rgb_l, rgb_r)
-            disparity = self.train_preprocessings(disparity)
+            rgb_l, rgb_r, disparity = self.train_preprocessings(rgb_l, rgb_r, disparity)
 
 
         rgb_l, rgb_r = self.transforms(rgb_l, rgb_r, dtypes=[torch.float, torch.float])
