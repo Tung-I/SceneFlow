@@ -107,6 +107,9 @@ venv.bak/
 # Experimental configs and results
 configs/train/example_config.yaml
 configs/test/example_config.yaml
+configs/train/pwcnet_optical_config.yaml
+configs/train/pwcnet_disparity_config.yaml
+
 models/
 
 flyingthings3d_split.csv
