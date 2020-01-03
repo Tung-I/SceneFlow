@@ -25,7 +25,12 @@ class EPE(nn.Module):
         # mini = torch.min(target)
         # output = (output - mini) / (maxi - mini)
         # target = (target - mini) / (maxi - mini)
-        epe = torch.norm(output-target, p=2, dim=1).mean()
+        if mask is not None:
+            epe = torch.norm(output-target, p=2, dim=1)
+            epe = epe * mask
+            epe = torch.sum(epe) / torch.sum(mask)
+        else:
+            epe = torch.norm(output-target, p=2, dim=1).mean()
 
         return epe
 
@@ -58,8 +63,8 @@ class EndPointError(nn.Module):
 
 
 
-class Accuracy(nn.Module):
-    """The End Point Error.
+class F1Score(nn.Module):
+    """The accuracy
     """
     def __init__(self, threshold):
         super().__init__()
@@ -75,9 +80,8 @@ class Accuracy(nn.Module):
         """
         # Get the one-hot encoding of the prediction and the ground truth label.
 
-        error = torch.sqrt(torch.sum((output - target)**2, 1) + 1e-20)
-
-        gtflow_len = torch.sqrt(torch.sum(target*target, 1) + 1e-20) # B,N
+        err = torch.norm(output-target, p=2, dim=1)
+        flow_len = torch.norm(target, p=2, dim=1)
 
         # print(error.shape)
         # print((error <= self.th).float().shape)
@@ -85,19 +89,12 @@ class Accuracy(nn.Module):
         # print(((error/gtflow_len <= self.th)*mask))
 
         if mask is not None:
-            op1 = ((error <= self.th).float()*mask).byte()
-            op2 = ((error/gtflow_len <= self.th).float()*mask).byte()
-            log = op1 | op2
-            acc = torch.sum(log.float(), 1)
-            mask_sum = torch.sum(mask, 1)
-            acc = acc[mask_sum > 0] / (mask_sum[mask_sum > 0] + 1e-20)
-            acc = torch.mean(acc)
+            f1 = ((err/flow_len <= self.th) * mask).byte()
+            f1 = torch.sum(f1.float())
+            f1 = f1 / (torch.sum(mask) + 1e-20)
         else:
-            op1 = (error <= self.th).byte()
-            op2 = (error/gtflow_len <= self.th).byte()
-            log = op1 | op2
-            acc = torch.sum(log.float(), 1)
-            acc = torch.mean(acc)
+            f1 = (err/flow_len <= self.th).byte()
+            f1 = torch.mean(f1.float())
 
-        return acc
+        return f1
 
