@@ -65,19 +65,19 @@ class PWCSCNet(nn.Module):
             self.add_module(f'DisparityContextNetwork(Lv{l})', layer)
             self.disparity_context_networks.append(layer)
 
-        self.scene_estimators = []
-        for l, ch in enumerate(lv_chs[::-1]):
-            # layer = DisparityEstimator(ch + (search_range*2+1)**2 + 2, batch_norm).to(device)
-            layer = SceneEstimator(2 + 1 + 1 + 3, batch_norm).to(device)
-            self.add_module(f'SceneEstimator(Lv{l})', layer)
-            self.scene_estimators.append(layer)
+        # self.scene_estimators = []
+        # for l, ch in enumerate(lv_chs[::-1]):
+        #     # layer = DisparityEstimator(ch + (search_range*2+1)**2 + 2, batch_norm).to(device)
+        #     layer = SceneEstimator(2 + 1 + 1 + 3, batch_norm).to(device)
+        #     self.add_module(f'SceneEstimator(Lv{l})', layer)
+        #     self.scene_estimators.append(layer)
 
-        self.scene_context_networks = []
-        for l, ch in enumerate(lv_chs[::-1]):
-            # layer = DisparityContextNetwork(ch + 2, batch_norm).to(device)
-            layer = SceneContextNetwork(ch + 3, batch_norm).to(device)
-            self.add_module(f'SceneContextNetwork(Lv{l})', layer)
-            self.scene_context_networks.append(layer)
+        # self.scene_context_networks = []
+        # for l, ch in enumerate(lv_chs[::-1]):
+        #     # layer = DisparityContextNetwork(ch + 2, batch_norm).to(device)
+        #     layer = SceneContextNetwork(ch + 3, batch_norm).to(device)
+        #     self.add_module(f'SceneContextNetwork(Lv{l})', layer)
+        #     self.scene_context_networks.append(layer)
 
 
         # init
