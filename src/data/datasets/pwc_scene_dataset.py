@@ -47,22 +47,30 @@ class PWCSceneDataset(BaseDataset):
         rgb_r = file['rgb_r'].astype('float32')
         rgb_next_l = file['rgb_next_l'].astype('float32')
         rgb_next_r = file['rgb_next_r'].astype('float32')
-        # disparity = file['disparity'].astype('float32')
-        # disparity_next = file['disparity_next'].astype('float32')
+        disparity = file['disparity'].astype('float32')
+        disparity_next = file['disparity_next'].astype('float32')
         flow = file['flow'].astype('float32')
 
+        disparity = np.expand_dims(disparity, axis=2) # (H, W, C)
+        disparity_next = np.expand_dims(disparity_next, axis=2)
+        flow = flow[:, :, :2]
 
+        if self.type == 'train':
+            rgb_l, rgb_r, rgb_next_l, rgb_next_r, disparity, disparity_next, flow = self.train_preprocessings(rgb_l, rgb_r, rgb_next_l, rgb_next_r, disparity, disparity_next, flow)
 
         rgb_l, rgb_r = self.transforms(rgb_l, rgb_r, dtypes=[torch.float, torch.float])
         rgb_next_l, rgb_next_r = self.transforms(rgb_next_l, rgb_next_r, dtypes=[torch.float, torch.float])
+        disparity, disparity_next = self.transforms(disparity, disparity_next, dtypes=[torch.float, torch.float])
         flow = self.transforms(flow, dtypes=[torch.float])
 
         rgb_l = rgb_l.permute(2, 0, 1).contiguous()
         rgb_r = rgb_r.permute(2, 0, 1).contiguous()
         rgb_next_l = rgb_next_l.permute(2, 0, 1).contiguous()
         rgb_next_r = rgb_next_r.permute(2, 0, 1).contiguous()
+        disparity = disparity.permute(2, 0, 1).contiguous()
+        disparity_next = disparity_next.permute(2, 0, 1).contiguous()
         flow = flow.permute(2, 0, 1).contiguous()
 
 
         # return {"rgb_l": rgb_l, "rgb_r": rgb_r, "rgb_next_l": rgb_next_l, "rgb_next_r": rgb_next_r, "disparity": disparity, "disparity_next": disparity_next, "flow": flow}
-        return {"rgb_l": rgb_l, "rgb_r": rgb_r, "rgb_next_l": rgb_next_l, "rgb_next_r": rgb_next_r, "flow": flow}
+        return {"rgb_l": rgb_l, "rgb_r": rgb_r, "rgb_next_l": rgb_next_l, "rgb_next_r": rgb_next_r, 'disparity': disparity, 'disparity_next': disparity_next, "flow": flow}

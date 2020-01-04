@@ -36,7 +36,8 @@ class PWCSceneTrainer(BaseTrainer):
         for batch in trange:
 
             batch = self._allocate_data(batch)
-            rgb_l, rgb_r, rgb_next_l, rgb_next_r, target = self._get_inputs_targets(batch)
+            rgb_l, rgb_r, rgb_next_l, rgb_next_r, disp, disp_next, flow = self._get_inputs_targets(batch)
+            target = {'disp':disp, 'disp_next':disp_next, 'flow':flow}
 
 
             if mode == 'training':
@@ -74,7 +75,7 @@ class PWCSceneTrainer(BaseTrainer):
             input (torch.Tensor): The data input.
             target (torch.LongTensor): The data target.
         """
-        return batch['rgb_l'], batch['rgb_r'], batch['rgb_next_l'], batch['rgb_next_r'], batch['flow']
+        return batch['rgb_l'], batch['rgb_r'], batch['rgb_next_l'], batch['rgb_next_r'], batch['disparity'], batch['disparity_next'], batch['flow']
 
     def _compute_losses(self, output, target, mask=None):
         """Compute the losses.
