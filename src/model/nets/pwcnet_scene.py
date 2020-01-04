@@ -58,12 +58,12 @@ class PWCSCNet(nn.Module):
             self.add_module(f'DisparityEstimator(Lv{l})', layer)
             self.disparity_estimators.append(layer)
         
-        # self.disparity_context_networks = []
-        # for l, ch in enumerate(lv_chs[::-1]):
-        #     # layer = DisparityContextNetwork(ch + 2, batch_norm).to(device)
-        #     layer = DisparityContextNetwork(ch + 1, batch_norm).to(device)
-        #     self.add_module(f'DisparityContextNetwork(Lv{l})', layer)
-        #     self.disparity_context_networks.append(layer)
+        self.disparity_context_networks = []
+        for l, ch in enumerate(lv_chs[::-1]):
+            # layer = DisparityContextNetwork(ch + 2, batch_norm).to(device)
+            layer = DisparityContextNetwork(ch + 1, batch_norm).to(device)
+            self.add_module(f'DisparityContextNetwork(Lv{l})', layer)
+            self.disparity_context_networks.append(layer)
 
         self.scene_estimators = []
         for l, ch in enumerate(lv_chs[::-1]):
@@ -107,18 +107,18 @@ class PWCSCNet(nn.Module):
                 shape = list(rgb_l.size()); shape[1] = 1
                 disp = torch.zeros(shape).to(self.device)
                 disp_next = torch.zeros(shape).to(self.device)
-                shape = list(rgb_l.size()); shape[1] = 3
-                scene_flow = torch.zeros(shape).to(self.device)
+                # shape = list(rgb_l.size()); shape[1] = 3
+                # scene_flow = torch.zeros(shape).to(self.device)
             else:
                 output_spatial_size = [rgb_l.size(2), rgb_l.size(3)]
                 # flow = F.interpolate(flow, scale_factor = 2, mode = 'bilinear', align_corners=True) * 2
                 flow = F.interpolate(flow, output_spatial_size, mode='bilinear', align_corners=True) * 2 
                 disp = F.interpolate(disp, output_spatial_size, mode='bilinear', align_corners=True) * 2 
                 disp_next = F.interpolate(disp_next, output_spatial_size, mode='bilinear', align_corners=True) * 2 
-                scene_flow = F.interpolate(scene_flow, output_spatial_size, mode='bilinear', align_corners=True) * 2 
+                # scene_flow = F.interpolate(scene_flow, output_spatial_size, mode='bilinear', align_corners=True) * 2 
 
 
-            rgb_next_l_warp = self.optical_warping_layer(rgb_l, flow)
+            rgb_next_l_warp = self.optical_warping_layer(rgb_next_l, flow)
             optical_corr = self.corr(rgb_l, rgb_next_l_warp)
 
             rgb_r_warp = self.disparity_warping_layer(rgb_r, disp)
@@ -145,24 +145,22 @@ class PWCSCNet(nn.Module):
 
             
             flow_fine = self.optical_context_networks[l](torch.cat([rgb_l, flow], dim = 1))
-            # disp_fine = self.disparity_context_networks[l](torch.cat([rgb_l, disp], dim = 1))
-            # disp_next_fine = self.disparity_context_networks[l](torch.cat([rgb_next_l, disp_next], dim = 1))
+            disp_fine = self.disparity_context_networks[l](torch.cat([rgb_l, disp], dim = 1))
+            disp_next_fine = self.disparity_context_networks[l](torch.cat([rgb_next_l, disp_next], dim = 1))
+
+
             flow = flow_coarse + flow_fine
-            # disp = disp_coarse + disp_fine
-            # disp_next = disp_next_coarse + disp_next_fine
-            disp = disp_coarse
-            disp_next = disp_next_coarse
+            disp = disp_coarse + disp_fine
+            disp_next = disp_next_coarse + disp_next_fine
 
-            disp_warp = self.optical_warping_layer(disp_next, -1. * flow)
+            # disp_warp = self.optical_warping_layer(disp_next, -1. * flow)
 
-            scene_coarse = self.scene_estimators[l](torch.cat([flow, disp_warp, disp, scene_flow], dim = 1))
-            scene_fine = self.scene_context_networks[l](torch.cat([rgb_l, scene_flow], dim = 1))
-            scene_flow = scene_coarse + scene_fine
 
             if l == self.output_level:
-                scene_flow = F.interpolate(scene_flow, scale_factor = 2 ** (self.num_levels - self.output_level - 1), mode = 'bilinear', align_corners=True) * 2 ** (self.num_levels - self.output_level - 1)
-
+                flow = F.interpolate(flow, scale_factor = 2 ** (self.num_levels - self.output_level - 1), mode = 'bilinear', align_corners=True) * 2 ** (self.num_levels - self.output_level - 1)
+                disp = F.interpolate(disp, scale_factor = 2 ** (self.num_levels - self.output_level - 1), mode = 'bilinear', align_corners=True) * 2 ** (self.num_levels - self.output_level - 1)
+                disp_next = F.interpolate(disp_next, scale_factor = 2 ** (self.num_levels - self.output_level - 1), mode = 'bilinear', align_corners=True) * 2 ** (self.num_levels - self.output_level - 1)
 
                 break
 
-        return scene_flow
+        return {'flow':flow, 'disp':disp, 'disp_next':disp_next}
