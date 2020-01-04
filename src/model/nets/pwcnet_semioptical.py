@@ -86,21 +86,29 @@ class PWCSemiNet(nn.Module):
                 flow_b = F.interpolate(flow_b, output_spatial_size, mode='bilinear', align_corners=True) * 2 
             # print(x2.shape)
             # print(flow.shape)
-            x2_warp = self.warping_layer(x2, flow_f / 2)
-            x1_warp = self.warping_layer(x1, flow_b / 2)
+	    x2_semiwarp = self.warping_layer(x2, flow_f / 2)
+            x1_semiwarp = self.warping_layer(x1, flow_b / 2)
+	    x2_warp = self.warping_layer(x2, flow_f)
+	    x1_warp = self.warping_layer(x1, flow_b)
             
             # correlation
-            corr = self.corr(x1_warp, x2_warp)
-            if self.corr_activation: F.leaky_relu_(corr)
+            corr = self.corr(x1_semiwarp, x2_semiwarp)
+	    corr_f = self.corr(x1, x2_warp)
+	    corr_b = self.corr(x1_warp, x2)
+
+            if self.corr_activation: 
+		F.leaky_relu_(corr)
+		F.leaky_relu_(corr_f)
+		F.leaky_relu_(corr_b)
 
             # concat and estimate flow
             # ATTENTION: `+ flow` makes flow estimator learn to estimate residual flow
             if self.residual:
-                flow_f_coarse = self.flow_estimators[l](torch.cat([x1, corr, flow_f], dim = 1)) + flow_f
-                flow_b_coarse = self.flow_estimators[l](torch.cat([x2, corr, flow_b], dim = 1)) + flow_b
+                flow_f_coarse = self.flow_estimators[l](torch.cat([x1, corr_f, corr, flow_f], dim = 1)) + flow_f
+                flow_b_coarse = self.flow_estimators[l](torch.cat([x2, corr_b, corr, flow_b], dim = 1)) + flow_b
             else:
-                flow_f_coarse = self.flow_estimators[l](torch.cat([x1, corr, flow_f], dim = 1))
-                flow_b_coarse = self.flow_estimators[l](torch.cat([x2, corr, flow_b], dim = 1))
+                flow_f_coarse = self.flow_estimators[l](torch.cat([x1, corr_f, corr, flow_f], dim = 1))
+                flow_b_coarse = self.flow_estimators[l](torch.cat([x2, corr_b, corr, flow_b], dim = 1))
 
             
             flow_f_fine = self.context_networks[l](torch.cat([x1, flow_f], dim = 1))

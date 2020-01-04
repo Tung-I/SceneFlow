@@ -1,16 +1,16 @@
 main:
     random_seed: 'nips2020'
-    saved_dir: '/home/tony/SceneFlow/models/flyingthings/pwcnet_semioptical/train'
+    saved_dir: '/home/tungi893610/SceneFlow/models/flyingthings/pwcnet_semioptical/train'
 
 dataset:
     name: 'PWCOpticalDataset'
     kwargs:
-        data_dir: '/home/tony/datasets/flyingthings3d_preprocessed'
-        data_split_csv: '/home/tony/SceneFlow/flyingthings3d_split.csv'
+        data_dir: '/work/tungi893610/flyingthings3d_preprocessed'
+        data_split_csv: '/home/tungi893610/SceneFlow/flyingthings3d_split_05.csv'
         train_preprocessings:
             - name: 'RandomCrop'
               kwargs:
-                  size: [512, 512]
+                  size: [480, 480]
         valid_preprocessings:
         augments:
         transforms:
@@ -19,15 +19,15 @@ dataset:
 dataloader:
     name: 'Dataloader'
     kwargs:
-        train_batch_size: 12
-        valid_batch_size: 2
+        train_batch_size: 32
+        valid_batch_size: 4
         shuffle: true
         num_workers: 4
 
 net:
     name: 'PWCSemiNet'
     kwargs:
-        device: 'cuda:0'
+        device: 'cuda:2'
         lv_chs: [3, 16, 32, 64, 96, 128, 192]
         search_range: 4
         batch_norm: True
@@ -55,7 +55,7 @@ optimizer:
 lr_scheduler:
     name: 'StepLR'
     kwargs:
-        step_size: 70
+        step_size: 100
         gamma: 0.1
 
 logger:
@@ -74,5 +74,5 @@ monitor:
 trainer:
     name: 'PWCOpticalTrainer'
     kwargs:
-        device: 'cuda:0'
-        num_epochs: 300
+        device: 'cuda:2'
+        num_epochs: 400
