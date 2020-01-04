@@ -35,7 +35,7 @@ class PWCSemiNet(nn.Module):
         
         self.flow_estimators = []
         for l, ch in enumerate(lv_chs[::-1]):
-            layer = OpticalFlowEstimator(ch + (search_range*2+1)**2 + 2, batch_norm).to(device)
+            layer = OpticalFlowEstimator(ch + (search_range*2+1)**2 + (search_range*2+1)**2 + 2, batch_norm).to(device)
             self.add_module(f'FlowEstimator(Lv{l})', layer)
             self.flow_estimators.append(layer)
         
