@@ -5,7 +5,7 @@ from torch.autograd import Variable
 
 import sys
 
-from lib.pwc_modules.utils import get_grid
+from lib.pwc_modules.utils import get_grid, get_grid_3d
 
 
 def conv(batch_norm, in_planes, out_planes, kernel_size = 3, stride = 1, dilation = 1):
@@ -18,6 +18,20 @@ def conv(batch_norm, in_planes, out_planes, kernel_size = 3, stride = 1, dilatio
     else:
         return nn.Sequential(
             nn.Conv2d(in_planes, out_planes, kernel_size = kernel_size, stride = stride, dilation = dilation, padding = ((kernel_size - 1) * dilation) // 2, bias=True),
+            nn.LeakyReLU(0.1,inplace=True)
+        )
+
+
+def conv3d(batch_norm, in_planes, out_planes, kernel_size = 3, stride = 1, dilation = 1):
+    if batch_norm:
+        return nn.Sequential(
+            nn.Conv3d(in_planes, out_planes, kernel_size = kernel_size, stride = stride, dilation = dilation, padding = ((kernel_size - 1) * dilation) // 2, bias=False),
+            nn.BatchNorm3d(out_planes),
+            nn.LeakyReLU(0.1,inplace=True)
+        )
+    else:
+        return nn.Sequential(
+            nn.Conv3d(in_planes, out_planes, kernel_size = kernel_size, stride = stride, dilation = dilation, padding = ((kernel_size - 1) * dilation) // 2, bias=True),
             nn.LeakyReLU(0.1,inplace=True)
         )
 
@@ -48,7 +62,7 @@ class WarpingLayer(nn.Module):
 class WarpingLayer3D(nn.Module):
     
     def __init__(self, device):
-        super(WarpingLayer, self).__init__()
+        super(WarpingLayer3D, self).__init__()
         self.device = device
     
     def forward(self, x, flow):
@@ -57,14 +71,14 @@ class WarpingLayer3D(nn.Module):
         # we still output unnormalized flow for the convenience of comparing EPEs with FlowNet2 and original code
         # so here we need to denormalize the flow
         flow_for_grip = torch.zeros_like(flow)
-        flow_for_grip[:,0,:,:] = flow[:,0,:,:] / ((flow.size(4) - 1.0) / 2.0)
-        flow_for_grip[:,1,:,:] = flow[:,1,:,:] / ((flow.size(3) - 1.0) / 2.0)
-        flow_for_grip[:,2,:,:] = flow[:,2,:,:] / ((flow.size(2) - 1.0) / 2.0)
+        flow_for_grip[:,0,:, :, :] = flow[:,0,:, :, :] / ((flow.size(4) - 1.0) / 2.0)
+        flow_for_grip[:,1,:, :, :] = flow[:,1,:, :, :] / ((flow.size(3) - 1.0) / 2.0)
+        flow_for_grip[:,2,:, :, :] = flow[:,2,:, :, :] / ((flow.size(2) - 1.0) / 2.0)
 
-        # print(get_grid(x).shape)
+        # print(get_grid_3d(x).shape)
         # print(flow_for_grip.shape)
 
-        grid = (get_grid(x).to(self.device) + flow_for_grip).permute(0, 2, 3, 4, 1)
+        grid = (get_grid_3d(x).to(self.device) + flow_for_grip).permute(0, 2, 3, 4, 1)
         x_warp = F.grid_sample(x, grid)
         return x_warp
 
@@ -100,7 +114,7 @@ class CostVolumeLayer(nn.Module):
 class CostVolumeLayer3D(nn.Module):
 
     def __init__(self, device, search_range):
-        super(CostVolumeLayer, self).__init__()
+        super(CostVolumeLayer3D, self).__init__()
         self.device = device
         self.search_range = search_range
 
@@ -172,6 +186,24 @@ class OpticalFlowEstimator(nn.Module):
         return self.convs(x)
 
 
+class FlowEstimator3D(nn.Module):
+
+    def __init__(self, ch_in, batch_norm):
+        super(FlowEstimator3D, self).__init__()
+
+        self.convs = nn.Sequential(
+            conv3d(batch_norm, ch_in, 128),
+            conv3d(batch_norm, 128, 128),
+            conv3d(batch_norm, 128, 96),
+            conv3d(batch_norm, 96, 64),
+            conv3d(batch_norm, 64, 32),
+            nn.Conv3d(in_channels = 32, out_channels = 3, kernel_size = 3, stride = 1, padding = 1, dilation = 1, groups = 1, bias = True)
+        )
+
+    def forward(self, x):
+        return self.convs(x)
+
+
 class ContextNetwork(nn.Module):
 
     def __init__(self, ch_in, batch_norm):
@@ -185,6 +217,25 @@ class ContextNetwork(nn.Module):
             conv(batch_norm, 96, 64, 3, 1, 16),
             conv(batch_norm, 64, 32, 3, 1, 1),
             conv(batch_norm, 32, 2, 3, 1, 1)
+        )
+    
+    def forward(self, x):
+        return self.convs(x)
+
+
+class ContextNetwork3D(nn.Module):
+
+    def __init__(self, ch_in, batch_norm):
+        super(ContextNetwork3D, self).__init__()
+
+        self.convs = nn.Sequential(
+            conv3d(batch_norm, ch_in, 128, 3, 1, 1),
+            conv3d(batch_norm, 128, 128, 3, 1, 2),
+            conv3d(batch_norm, 128, 128, 3, 1, 4),
+            conv3d(batch_norm, 128, 96, 3, 1, 8),
+            conv3d(batch_norm, 96, 64, 3, 1, 16),
+            conv3d(batch_norm, 64, 32, 3, 1, 1),
+            conv3d(batch_norm, 32, 3, 3, 1, 1)
         )
     
     def forward(self, x):
@@ -288,3 +339,38 @@ class SceneFlowContextNetwork(nn.Module):
     
     def forward(self, x):
         return self.convs(x)
+
+
+class Generate3DFeature(nn.Module):
+    
+    def __init__(self, device, depth_range):
+        super(Generate3DFeature, self).__init__()
+        self.device = device
+        self.depth_range = depth_range
+    
+    def forward(self, x, disp):
+        # disp must be normalized first (between -1 ~ 1)
+        distribution = [1.0, 0.7, 0.3]
+        device = self.device
+
+        b, c, h, w = x.size()
+        output = torch.zeros((b, c, 2*self.depth_range+1, h, w)).to(self.device)
+
+        disp = (disp * (self.depth_range - len(distribution)) ).long()
+        disp = disp + self.depth_range
+
+        b, c, d, h, w = output.size()
+        disp = torch.zeros((b, c, h, w)).long().to(self.device) + disp
+        disp.unsqueeze_(2)
+        for idx, dist in enumerate(distribution):
+            # print(disp.size())
+            # print(output.size())
+            output = output.scatter_(2, disp+idx, dist)
+            output = output.scatter_(2, disp-idx, dist)
+
+        x = torch.unsqueeze(x, 2)
+        output = output * x
+
+        return output
+
+
