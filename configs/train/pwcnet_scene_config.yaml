@@ -1,16 +1,16 @@
 main:
     random_seed: 'nips2020'
-    saved_dir: '/home/tony/SceneFlow/models/flyingthings/pwcnet_scene/train'
+    saved_dir: '/home/tony/SceneFlow/models/flyingthings/pwcnet_rgbd/train'
 
 dataset:
-    name: 'PWCSceneDataset'
+    name: 'PWCRGBDDataset'
     kwargs:
         data_dir: '/home/tony/datasets/flyingthings3d_preprocessed'
-        data_split_csv: '/home/tony/SceneFlow/flyingthings3d_split.csv'
+        data_split_csv: '/home/tony/SceneFlow/flyingthings3d_split_03.csv'
         train_preprocessings:
             - name: 'RandomCrop'
               kwargs:
-                  size: [512, 512]
+                  size: [480, 480]
         valid_preprocessings:
         augments:
         transforms:
@@ -19,13 +19,13 @@ dataset:
 dataloader:
     name: 'Dataloader'
     kwargs:
-        train_batch_size: 5
+        train_batch_size: 12
         valid_batch_size: 2
         shuffle: true
         num_workers: 4
 
 net:
-    name: 'PWCSCNet'
+    name: 'PWCRGBDNet'
     kwargs:
         device: 'cuda:0'
         lv_chs: [3, 16, 32, 64, 96, 128, 192]
@@ -34,16 +34,26 @@ net:
         corr_activation: True
         residual: True
         output_level: 4
+        depth_factor: 2
 
 losses:
-    - name: 'MyL2Loss'
+    - name: 'FlowL2Error'
       weight: 1.0
+    # - name: 'FlowL2Error'
+    #   weight: 0.5
+    # - name: 'DispL2Error'
+    #   weight: 0.25
+    # - name: 'DispNextL2Error'
+    #   weight: 0.25
 
 metrics:
-    - name: 'EPE'
-    # - name: 'Accuracy'
-    #   kwargs:
-    #     threshold: 0.1
+    # - name: 'FlowL2Error'
+    # - name: 'DispL2Error'
+    # - name: 'DispNextL2Error'
+    - name: 'FlowL2Error'
+    - name: 'F1Score'
+      kwargs:
+        threshold: 0.05
 
 optimizer:
     name: 'Adam'
@@ -55,7 +65,7 @@ optimizer:
 lr_scheduler:
     name: 'StepLR'
     kwargs:
-        step_size: 70
+        step_size: 100
         gamma: 0.1
 
 logger:
@@ -72,7 +82,7 @@ monitor:
         early_stop: 0
 
 trainer:
-    name: 'PWCSceneTrainer'
+    name: 'PWCRGBDTrainer'
     kwargs:
         device: 'cuda:0'
         num_epochs: 300

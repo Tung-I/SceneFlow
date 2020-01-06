@@ -23,31 +23,47 @@ class PWCSceneLogger(BaseLogger):
             valid_output (torch.Tensor): The validation output.
         """
 
-        image_train = train_batch['rgb_l']
-        image_next_train = train_batch['rgb_next_l']
-        label_train = train_batch['flow']
-        pred_train = train_output
-        image_valid = valid_batch['rgb_l']
-        image_next_valid = valid_batch['rgb_next_l']
-        label_valid = valid_batch['flow']
-        pred_valid = valid_output
+        flow_train = train_batch['flow'].detach().cpu()
+        optical_flow_train = flow_train[:, :2, :, :]
+        disp_change_train = flow_train[:, 2:3, :, :]
+        flow_pred_train = train_output['flow'].detach().cpu()
+        optical_flow_pred_train = flow_pred_train[:, :2, :, :]
+        disp_change_pred_train = flow_pred_train[:, 2:3, :, :]
+
+        flow_valid = valid_batch['flow'].detach().cpu()
+        optical_flow_valid = flow_valid[:, :2, :, :]
+        disp_change_valid = flow_valid[:, 2:3, :, :]
+        flow_pred_valid = valid_output['flow'].detach().cpu()
+        optical_flow_pred_valid = flow_pred_valid[:, :2, :, :]
+        disp_change_pred_valid = flow_pred_valid[:, 2:3, :, :]
+
+        b, c, h, w = flow_train.size()
+        pad_train = torch.zeros((b, 1, h, w))
+        b, c, h, w = flow_valid.size()
+        pad_valid = torch.zeros((b, 1, h, w))
+
+        optical_flow_train = torch.cat([optical_flow_train, pad_train], 1)
+        optical_flow_pred_train = torch.cat([optical_flow_pred_train, pad_train], 1)
+        optical_flow_valid = torch.cat([optical_flow_valid, pad_valid], 1)
+        optical_flow_pred_valid = torch.cat([optical_flow_pred_valid, pad_valid], 1)
+
 
         # print(image_train.size())
         # print(label_train.size())
         # print(pred_train.size())
 
 
-        train_img = make_grid(image_train, nrow=1, normalize=True, scale_each=True, pad_value=1)
-        train_img_next = make_grid(image_next_train, nrow=1, normalize=True, scale_each=True, pad_value=1)
-        train_label = make_grid(label_train, nrow=1, normalize=True, scale_each=True, pad_value=1)
-        train_pred = make_grid(pred_train, nrow=1, normalize=True, scale_each=True, pad_value=1)
+        optical_flow_train = make_grid(optical_flow_train, nrow=1, normalize=True, scale_each=True, pad_value=1)
+        optical_flow_pred_train = make_grid(optical_flow_pred_train, nrow=1, normalize=True, scale_each=True, pad_value=1)
+        disp_change_train = make_grid(disp_change_train, nrow=1, normalize=True, scale_each=True, pad_value=1)
+        disp_change_pred_train = make_grid(disp_change_pred_train, nrow=1, normalize=True, scale_each=True, pad_value=1)
 
-        valid_img = make_grid(image_valid, nrow=1, normalize=True, scale_each=True, pad_value=1)
-        valid_img_next = make_grid(image_next_valid, nrow=1, normalize=True, scale_each=True, pad_value=1)
-        valid_label = make_grid(label_valid, nrow=1, normalize=True, scale_each=True, pad_value=1)
-        valid_pred = make_grid(pred_valid, nrow=1, normalize=True, scale_each=True, pad_value=1)
+        optical_flow_valid = make_grid(optical_flow_valid, nrow=1, normalize=True, scale_each=True, pad_value=1)
+        optical_flow_pred_valid = make_grid(optical_flow_pred_valid, nrow=1, normalize=True, scale_each=True, pad_value=1)
+        disp_change_valid = make_grid(disp_change_valid, nrow=1, normalize=True, scale_each=True, pad_value=1)
+        disp_change_pred_valid = make_grid(disp_change_pred_valid, nrow=1, normalize=True, scale_each=True, pad_value=1)
 
-        train_grid = torch.cat((train_img, train_img_next, train_label, train_pred), dim=-1)
-        valid_grid = torch.cat((valid_img, valid_img_next, valid_label, valid_pred), dim=-1)
+        train_grid = torch.cat((optical_flow_train, optical_flow_pred_train, disp_change_train, disp_change_pred_train), dim=-1)
+        valid_grid = torch.cat((optical_flow_valid, optical_flow_pred_valid, disp_change_valid, disp_change_pred_valid), dim=-1)
         self.writer.add_image('train', train_grid, epoch)
         self.writer.add_image('valid', valid_grid, epoch)

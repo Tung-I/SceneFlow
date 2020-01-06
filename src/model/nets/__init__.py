@@ -5,5 +5,6 @@ from .pwcnet_dispchange import PWCDCNet
 from .pwcnet_scene import PWCSCNet
 from .pwcnet_semioptical import PWCSemiNet
 from .pwcnet_both import PWCBothNet
+from .pwcnet_rgbd import PWCRGBDNet
 
 

@@ -45,6 +45,30 @@ class WarpingLayer(nn.Module):
         return x_warp
 
 
+class WarpingLayer3D(nn.Module):
+    
+    def __init__(self, device):
+        super(WarpingLayer, self).__init__()
+        self.device = device
+    
+    def forward(self, x, flow):
+        device = self.device
+        # WarpingLayer uses F.grid_sample, which expects normalized grid
+        # we still output unnormalized flow for the convenience of comparing EPEs with FlowNet2 and original code
+        # so here we need to denormalize the flow
+        flow_for_grip = torch.zeros_like(flow)
+        flow_for_grip[:,0,:,:] = flow[:,0,:,:] / ((flow.size(4) - 1.0) / 2.0)
+        flow_for_grip[:,1,:,:] = flow[:,1,:,:] / ((flow.size(3) - 1.0) / 2.0)
+        flow_for_grip[:,2,:,:] = flow[:,2,:,:] / ((flow.size(2) - 1.0) / 2.0)
+
+        # print(get_grid(x).shape)
+        # print(flow_for_grip.shape)
+
+        grid = (get_grid(x).to(self.device) + flow_for_grip).permute(0, 2, 3, 4, 1)
+        x_warp = F.grid_sample(x, grid)
+        return x_warp
+
+
 class CostVolumeLayer(nn.Module):
 
     def __init__(self, device, search_range):
@@ -70,6 +94,39 @@ class CostVolumeLayer(nn.Module):
 
                 cv[:, (search_range*2+1) * i + j, slice_h, slice_w] = (x1[:,:,slice_h, slice_w]  * x2[:,:,slice_h_r, slice_w_r]).sum(1)
     
+        return cv / shape[1]
+
+
+class CostVolumeLayer3D(nn.Module):
+
+    def __init__(self, device, search_range):
+        super(CostVolumeLayer, self).__init__()
+        self.device = device
+        self.search_range = search_range
+
+    
+    def forward(self, x1, x2):
+        search_range = self.search_range
+        shape = list(x1.size()); shape[1] = (self.search_range * 2 + 1) ** 3
+        cv = torch.zeros(shape).to(self.device)
+
+        for i in range(-search_range, search_range + 1):
+            for j in range(-search_range, search_range + 1):
+                for h in range(-search_range, search_range + 1):
+                    if   i < 0: slice_h, slice_h_r = slice(None, i), slice(-i, None)
+                    elif i > 0: slice_h, slice_h_r = slice(i, None), slice(None, -i)
+                    else:       slice_h, slice_h_r = slice(None),    slice(None)
+
+                    if   j < 0: slice_w, slice_w_r = slice(None, j), slice(-j, None)
+                    elif j > 0: slice_w, slice_w_r = slice(j, None), slice(None, -j)
+                    else:       slice_w, slice_w_r = slice(None),    slice(None)
+
+                    if   h < 0: slice_d, slice_d_r = slice(None, h), slice(-h, None)
+                    elif h > 0: slice_d, slice_d_r = slice(h, None), slice(None, -h)
+                    else:       slice_d, slice_d_r = slice(None),    slice(None)
+
+                    cv[:, (search_range*2+1) * i + (search_range*2+1) * j + h, slice_d, slice_h, slice_w] = (x1[:,:, slice_d, slice_h, slice_w] * x2[:,:, slice_d_r, slice_h_r, slice_w_r]).sum(1)
+
         return cv / shape[1]
 
 
@@ -196,10 +253,10 @@ class DisparityContextNetwork(nn.Module):
         return self.convs(x)
 
 
-class SceneEstimator(nn.Module):
+class SceneFlowEstimator(nn.Module):
 
     def __init__(self, ch_in, batch_norm):
-        super(SceneEstimator, self).__init__()
+        super(SceneFlowEstimator, self).__init__()
 
         self.convs = nn.Sequential(
             conv(batch_norm, ch_in, 128),
@@ -214,10 +271,10 @@ class SceneEstimator(nn.Module):
         return self.convs(x)
 
 
-class SceneContextNetwork(nn.Module):
+class SceneFlowContextNetwork(nn.Module):
 
     def __init__(self, ch_in, batch_norm):
-        super(SceneContextNetwork, self).__init__()
+        super(SceneFlowContextNetwork, self).__init__()
 
         self.convs = nn.Sequential(
             conv(batch_norm, ch_in, 128, 3, 1, 1),

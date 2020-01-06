@@ -3,3 +3,4 @@ from .pwc_optical_dataset import PWCOpticalDataset
 from .pwc_disparity_dataset import PWCDisparityDataset
 from .pwc_dispchange_dataset import PWCDispchangeDataset
 from .pwc_scene_dataset import PWCSceneDataset
+from .pwc_rgbd_dataset import PWCRGBDDataset

@@ -92,12 +92,13 @@ class EPE(nn.Module):
         # mini = torch.min(target)
         # output = (output - mini) / (maxi - mini)
         # target = (target - mini) / (maxi - mini)
+        flow = target['flow']
         if mask is not None:
-            epe = torch.norm(output-target, p=2, dim=1)
+            epe = torch.norm(output-flow, p=2, dim=1)
             epe = epe * mask
             epe = torch.sum(epe) / torch.sum(mask)
         else:
-            epe = torch.norm(output-target, p=2, dim=1).mean()
+            epe = torch.norm(output-flow, p=2, dim=1).mean()
 
         return epe
 
@@ -118,9 +119,10 @@ class F1Score(nn.Module):
             metric (torch.Tensor) (C): The dice scores for each class.
         """
         # Get the one-hot encoding of the prediction and the ground truth label.
-
-        err = torch.norm(output-target, p=2, dim=1)
-        flow_len = torch.norm(target, p=2, dim=1)
+        flow = target['flow']
+        flow_pred = output['flow']
+        err = torch.norm(flow_pred-flow, p=2, dim=1)
+        flow_len = torch.norm(flow, p=2, dim=1)
 
         # print(error.shape)
         # print((error <= self.th).float().shape)
