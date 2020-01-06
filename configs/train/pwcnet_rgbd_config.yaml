@@ -1,16 +1,16 @@
 main:
     random_seed: 'nips2020'
-    saved_dir: '/home/tony/SceneFlow/models/flyingthings/pwcnet_rgbd_mean/train'
+    saved_dir: '/home/tony/SceneFlow/models/flyingthings/pwcnet_rgbd_simple/train'
 
 dataset:
     name: 'PWCRGBDDataset'
     kwargs:
         data_dir: '/home/tony/datasets/flyingthings3d_preprocessed'
-        data_split_csv: '/home/tony/SceneFlow/flyingthings3d_split_001.csv'
+        data_split_csv: '/home/tony/SceneFlow/flyingthings3d_split_01.csv'
         train_preprocessings:
             - name: 'RandomCrop'
               kwargs:
-                  size: [480, 480]
+                  size: [256, 256]
         valid_preprocessings:
         augments:
         transforms:
@@ -20,12 +20,12 @@ dataloader:
     name: 'Dataloader'
     kwargs:
         train_batch_size: 2
-        valid_batch_size: 1
+        valid_batch_size: 2
         shuffle: true
         num_workers: 4
 
 net:
-    name: 'PWCRGBD2Net'
+    name: 'PWCRGBD3Net'
     kwargs:
         device: 'cuda:0'
         lv_chs: [3, 16, 32, 64, 96, 128, 192]
@@ -34,7 +34,7 @@ net:
         corr_activation: True
         residual: True
         output_level: 4
-        depth_range: 24
+        depth_range: 8
 
 losses:
     - name: 'FlowL2Error'
